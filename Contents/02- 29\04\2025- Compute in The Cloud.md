@@ -233,6 +233,81 @@ Amazon EC2 Auto Scaling içinde iki farklı yaklaşım bulunur:
 
 Daha hızlı scale olmak isterseniz hem dynamic hem de predictive scaling'i birlikte kullanmanız gerekir.
 
+#### Scale up: Daha güçlü makineler kullanmak anlamına gelir (daha büyük instance).
+
+#### Scale out: Daha çok sayıda makine kullanmak demektir (yatay ölçekleme).
+
+Örneğin, bir markette kasiyerin boyutunu büyültmek (scale up), artan müşteri talebi için bir çözüm değildir. Ama birden fazla kasiyer koymak yani scale out yapmak bir çözümdür.
+
+> Decoupling: Tanım olarak, sistem parçalarını ayırmak demektir. Bu da sonuç olarak her bir kaynağın ayrı ayrı ölçeklenmesini, güncellenmesini ve yönetilmesine olanak tanır. Bu noktada ölçeklemeden bahsettiğimiz için, onun üstünden gidecek olursak;
+
+> Bir yerde yoğunluk varsa sadece o parçayı büyütürsün. Örneğin, bir kahve dükkanında çalışanlar olarak kasiyer ve baristanın olduğunu varsayalım. Baristalar müşteri talebini karşılıyor ama kasiyerler karşılayamıyorsa, sadece kasiyerlerin sayısını arttırırsınız.
+
+
+#### Örnek: Amazon EC2 Auto Scaling
+
+Bulutta, bilgi işlem gücü programlanabilir bir kaynak olduğundan, ölçekleme konusunda daha esnek bir yaklaşım benimseyebilirsin. Bir uygulamaya Amazon EC2 Auto Scaling ekleyerek, gerektiğinde yeni EC2 instance'ları ekleyebilir ve ihtiyaç kalmadığında bunları sonlandırabilirsin. Bir Auto Scaling grubu oluşturduğunda, minimum Amazon EC2 instance sayısını belirleyebilirsin. Minimum kapasite, Auto Scaling grubunu oluşturduktan hemen sonra başlatılacak EC2 instance sayısını ifade eder. Bu örnekte, Auto Scaling grubunun minimum kapasitesi bir EC2 instance’dır.
+
+Sonrasında, uygulamanın çalışması için minimum bir EC2 instance yeterli olsa bile, istenen kapasiteyi (desired capacity) iki EC2 instance olarak ayarlayabilirsin.
+
+Diyelim ki bir uygulamayı Amazon EC2 instance’larında başlatmaya hazırlanıyorsun. Auto Scaling grubunun boyutunu yapılandırırken minimum EC2 instance sayısını bire ayarlayabilirsin. Bu, her zaman en az bir EC2 instance’ın çalışıyor olması gerektiği anlamına gelir.
+
+Eğer bir auto scaling grubunda, desired capacity ayarlanmazsa, default olarak minimum instance kadar çalışacaktır.
+
+![image](images/autoscalingroup.png)
+
+Auto Scaling grubunda ayarlayabileceğin üçüncü yapılandırma ise maksimum kapasitedir. Örneğin, artan talebe yanıt olarak ölçekleme yapılmasını isteyebilirsin; ancak bu ölçeklemenin en fazla dört Amazon EC2 instance’a kadar çıkmasına izin verebilirsin.
+
+Amazon EC2 Auto Scaling, Amazon EC2 instance’larını kullandığı için yalnızca kullandığın süre boyunca ve kullandığın kadar ödeme yaparsın. Bu sayede, maliyetleri azaltırken en iyi müşteri deneyimini sağlayan maliyet açısından verimli bir mimariye sahip olursun. Ya da istersen diğer instance türleri ile de kullanabilirsin (spot, reserved vs.).
+
+-------------------------------------------------------------------------------------------------------------------------------
+
+## Elastic Load Balancing (ELB)
+
+Elastic Load Balancing, AWS'in gelen uygulama trafiğini birden fazla kaynak arasında (örneğin Amazon EC2 instance'ları gibi) otomatik olarak dağıtan servisidir.
+
+Bir yük dengeleyici (load balancer), Auto Scaling grubuna gelen tüm web trafiği için tek bir temas noktası (single point) gibi davranır. Bu da demek oluyor ki, gelen trafik miktarına bağlı olarak Amazon EC2 instance'ları eklediğinde veya kaldırdığında, istekler önce load balancer'a gider. Ardından bu istekler, onları işleyecek birden fazla kaynağa dağıtılır. Yani, yeni bir EC2 instance eklenince, Auto Scaling otomatik olarak ELB'ye "bu instance trafik alabilir" diye haber verir. Aynı şekilde kapanırken de haber verir.
+
+Örneğin birden fazla Amazon EC2 instance’ın varsa, Elastic Load Balancing bu iş yükünü tüm instance’lar arasında dağıtır, böylece hiçbir instance işin büyük bir kısmını tek başına taşımak zorunda kalmaz.
+
+Elastic Load Balancing ve Amazon EC2 Auto Scaling ayrı servisler olmasına rağmen, birlikte çalışarak Amazon EC2 üzerinde çalışan uygulamaların yüksek performans ve yüksek erişilebilirlik sunmasını sağlarlar. Dolayısıyla da ELB otomatik ölçeklenebilir. 
+
+Dediğimiz gibi, trafik artsa da ELB kendi kendine ölçeklenir, senin müdahale etmene veya ekstra para ödemen gerekmez (sabit saatlik ücret içinde).
+
+### Örnek: Elastic Load Balancing
+
+> Low-demand period
+
+> Elastic Load Balancing’in nasıl çalıştığına bir örnek verelim. Diyelim ki birkaç müşteri kahve dükkanına geldi ve sipariş vermeye hazır.
+
+> Eğer sadece birkaç kasa açıksa, bu durum hizmet almak isteyen müşteri talebiyle uyumludur. Kahve dükkanında, müşterisiz açık duran kasaların olması daha az olasıdır. Bu örnekte, kasaları Amazon EC2 instance’ları gibi düşünebilirsin.
+
+> High-demand period
+
+> Gün boyunca müşteri sayısı arttıkça, kahve dükkanı daha fazla kasayı açarak müşterileri karşılar.
+
+> Ayrıca, bir kahve dükkanı çalışanı müşterileri en uygun kasaya yönlendirir, böylece istekler açık olan kasalar arasında eşit şekilde dağılır. Bu kahve dükkanı çalışanını, bir yük dengeleyici (load balancer) olarak düşünebilirsin.
+
+Yani özet olarak, kullanılmayan instance'lar kapatılır, talep arttığında ise instance'lar tekrar devreye girer.
+
+#### EK OLARAK BİLGİLER:
+
+- İstersen kendi load balancer'ını kurup (third-party veya custom) yönetebilirsin (kurulum, güncelleme, ölçekleme, failover yönetimi sana kalıyor).
+
+- Elastic Load Balancing (ELB) Bölgesel (Regional) Bir Servistir. ELB, EC2 instance'lar gibi tek bir fiziksel instance üstünde çalışmaz, bölgesel olarak (Region seviyesinde) çalışır. Bu yüzden yüksek erişilebilirlik (High Availability) kendiliğinden gelir.
+
+- ELB sadece dışarıdan gelen trafik için değil, frontend → backend trafiği için de kullanılabilir. Frontend'ler backend instance sayısını bilmek zorunda kalmaz, sadece ELB URL'ine istek atar. Bu da frontend ve backend'i birbirinden ayırarak "Decoupled Architecture" sunar.
+
+
+
+
+
+
+
+
+
+
+
 
 
 
