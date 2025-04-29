@@ -131,7 +131,118 @@ Standard Reserved ve Convertible Reserved Instance'ları 1 yıllık veya 3 yıll
 
 > Availability Zone = AWS'nin bir bölgede (region'da) bulunan birbirinden bağımsız, fiziksel veri merkezleri topluluğudur. Başka bir deyişle, Aynı şehirde (veya yakın bir alanda) bulunan, birbirinden ayrı veri merkezleri. Birbirinden elektrik, internet, bina, altyapı olarak ayrıdırlar. Ama aralarında çok hızlı ve güvenli bağlantılar vardır.
 
-Sonuç olarak, -Standart Reserved Instances- Bu seçenek, sabit durum uygulamalarınız için ihtiyaç duyduğunuz EC2 örnek türünü ve boyutunu ve bunları hangi AWS Bölgesinde çalıştırmayı planladığınızı biliyorsanız iyi bir uyumdur.
+Sonuç olarak, *Standart Reserved Instances* seçeneği, steady-state (kararlı) uygulamalarınız için ihtiyaç duyduğunuz EC2 instance türü ve boyutu ile bunları hangi AWS Bölgesinde (region) çalıştırmayı planladığınızı biliyorsanız seçilmelidir.
+
+Reserved Instances için şunları belirtmeniz gerekir:
+
+- Instance type and size: Örneğin, m5.xlarge
+
+- Platform description (operating system): Microsoft Windows Server or Red Hat Enterprise Linux vs.
+
+- Tenancy: Default tenancy veya dedicated tenancy seçilebilir. Default tenancy, başkalarıyla aynı fiziksel makinede paylaşım yapılmasıyken dedicated tenancy sana özel makine atanmasıdır.
+
+EC2 Reserved instance'larınız için bir "Availability Zone" belirtme seçeneğiniz vardır. Belirtirseniz, EC2 capacity reservation elde edersiniz. Bu, istediğiniz miktarda EC2 instance'ının ihtiyaç duyduğunuzda kullanılabilir olmasını sağlar.
+
+EC2 instance'larınızı farklı Availability Zone veya farklı instance türlerinde çalıştırmanız gerekiyorsa, "*Convertible Reserved Instances*" sizin için doğru seçim olabilir. 
+
+Not: EC2 instance'ları çalıştırmak için esnekliğe ihtiyaç duyduğunuzda daha az bir indirimden yararlanırsınız. Ne kadar değişiklik o kadar maliyet diyebiliriz.
+
+Reserved Instance anlaşmanızın sonuna geldiğinizde, hiçbir kesinti olmadan EC2 instance'ınızı kullanmaya devam edebilirsiniz. Ancak, aşağıdakileri yapmadığınız sürece on-demand oranlarına göre ödeme yapmanız gerekir:
+
+- Instance'ınızı sonlandırmak
+
+- Eski instance özellikleriniz ile eşleşen yeni bir reserved instance almak. (instance family ile size, Region, platform, ve tenancy)
+
+### EC2 Instance Saving Plans
+
+AWS, Amazon EC2 dahil olmak üzere birkaç compute hizmeti için Savings Plans (Tasarruf Planları) sunar.
+
+EC2 Instance Savings Plans, belirli bir EC2 instance ailesi ve Bölge için 1 yıllık veya 3 yıllık bir süre boyunca saatlik harcama taahhüdü verdiğinizde EC2 instance maliyetlerinizi azaltır. Bu süre taahhüdü, On-Demand fiyatlarına kıyasla %72'ye varan tasarruf sağlar.
+
+Yapılan taahhüt miktarına kadar olan tüm kullanım, indirimli Savings Plans fiyatı üzerinden ücretlendirilir (örneğin, saatte 10 USD). Taahhüdün üzerindeki kullanım ise normal On-Demand fiyatlarıyla ücretlendirilir.
+
+EC2 Instance Savings Plans, taahhüt süresi boyunca Amazon EC2 kullanımınızda esneklik istiyorsanız iyi bir seçenektir.
+
+Seçtiğiniz bir Bölge içindeki herhangi bir EC2 instance ailesi kullanımı üzerinde (örneğin, Kuzey Virginia bölgesindeki M5 kullanımı) tasarruf edersiniz. Bu tasarruf, Availability Zone, instance boyutu, işletim sistemi veya tenancy fark etmeksizin geçerlidir. 
+
+EC2 Instance Savings Plans ile elde edilen tasarruf, Standard Reserved Instances ile sağlanan tasarrufa benzer seviyededir.
+
+Ancak, Reserved Instance'lardan farklı olarak,
+
+➔ İndirim almak için önceden belirli bir EC2 instance türü ve boyutu (örneğin, m5.xlarge), işletim sistemi ve tenancy belirtmeniz gerekmez.
+
+➔ Ayrıca, 1 yıllık veya 3 yıllık bir süre boyunca belirli bir EC2 instance sayısına taahhütte bulunmanız da gerekmez.
+
+➔ Buna ek olarak, EC2 Instance Savings Plans, bir EC2 kapasite rezervasyonu seçeneği de sunmaz.
+
+AWS Cost Explorer (ileride detaylı inceleyeceğiz) ile AWS maliyetlerinizi ve kullanımınızı zaman içinde görselleştirerek anlayabilir ve yönetebilirsiniz.
+
+Savings Plans seçeneklerini değerlendirirken, AWS Cost Explorer’ı kullanarak son 7, 30 veya 60 gün içerisindeki Amazon EC2 kullanımınızı analiz edebilirsiniz.
+
+AWS Cost Explorer ayrıca, Amazon EC2 maliyetlerinizde ne kadar tasarruf edebileceğinizi tahmin eden özelleştirilmiş Savings Plans önerileri de sağlar. Bu öneriler, geçmiş Amazon EC2 kullanımınıza ve 1 yıllık veya 3 yıllık Savings Plan'larda saatlik taahhüt miktarınıza dayanarak yapılır.
+
+### Spot Instances
+
+Spot Instance'lar, başlangıç ve bitiş zamanlarında esneklik olan veya kesintilere dayanabilecek iş yükleri için idealdir.
+
+Spot Instance'lar, Amazon EC2'nin kullanılmayan bilişim kapasitesini kullanır ve On-Demand fiyatlarına kıyasla %90'a varan maliyet tasarrufu sağlar.
+
+Diyelim ki, gerektiğinde başlayıp durdurulabilen bir arka plan işleme göreviniz var (örneğin, bir müşteri anketi için veri işleme işi). Bu işleme görevini başlatıp durdurmak istiyorsunuz ve bu süreç şirketinizin genel operasyonlarını etkilemeyecek.
+
+Eğer bir Spot isteği oluşturursanız ve Amazon EC2 kapasitesi mevcutsa, Spot Instance'ınız başlatılır.
+Ancak, bir Spot isteği oluşturduğunuzda Amazon EC2 kapasitesi mevcut değilse, istek başarılı olmaz ve kapasite uygun hale gelene kadar beklemeniz gerekir. Kullanılamayan kapasite, arka plan işleme görevinizin başlamasını geciktirebilir.
+
+Bir Spot Instance başlattıktan sonra, eğer kapasite artık mevcut değilse veya Spot Instance talebi artarsa, instance'ınız kesintiye uğrayabilir. Bu durum, arka plan işleme göreviniz için bir sorun teşkil etmeyebilir.
+
+Ancak, örneğin uygulama geliştirme ve test etme gibi işlerde, beklenmedik kesintilerden kaçınmak istersiniz.
+Bu nedenle, bu tür görevler için ideal olan farklı bir EC2 instance türü seçmeniz daha iyi olur.
+
+Aslında Spot Instance özetle, size o anda kullanılmayan EC2 kapasitesini süper ucuza sağlar ama istediğiniz zaman başlatılamayabilir veya çalışırken kapatılabilir.
+
+### Dedicated Hosts
+
+Dedicated Host'lar, Amazon EC2 instance kapasitesi bulunan ve tamamen sizin kullanımınıza ayrılmış fiziksel sunuculardır. Mevcut soket başına, çekirdek başına veya sanal makine başına lisanslarınızı kullanarak lisans uyumluluğunuzu korumanıza yardımcı olabilirsiniz. On-Demand Dedicated Host satın alabilir veya Dedicated Host Reservation yapabilirsiniz.
+
+Burada bahsedilen tüm Amazon EC2 seçenekleri arasında, Dedicated Host'lar en pahalı olan seçenektir.
+
+## Scaling Amazon EC2
+
+Ölçeklenebilirlik (Scalability), bir sistemin artan iş yükü karşısında kapasitesini arttırabilme yeteneğidir.
+
+Yani: Talep artarsa, sistem buna cevap verecek şekilde büyüyebilmeli. Talep azalırsa, sistem gereksiz kaynakları bırakabilmeli.
+
+Auto Scability ise, yalnızca ihtiyaç duyduğun kaynaklarla başlamak ve mimarini, değişen talebe otomatik olarak yanıt verecek şekilde dışa (scale out) veya içe (scale in) doğru ölçeklenecek şekilde tasarlamaktır. 
+
+Bu sayede, yalnızca kullandığın kaynaklar için ödeme yaparsın. Müşterilerinin ihtiyaçlarını karşılayacak bilişim kapasitesinin yetersiz kalmasından endişelenmene gerek yoktur.
+
+Bunu sağlayan AWS hizmeti, Amazon EC2 Auto Scaling’dir
+
+### Amazon EC2 Auto Scaling
+
+Daha önce erişmeye çalıştığın bir web sitesi hiç yüklenmediyse ya da sık sık zaman aşımına uğradıysa, bu büyük ihtimalle sitenin kaldırabileceğinden fazla istek alması yüzündendir. Bu durum, bir kahve dükkânında sadece bir baristanın çalıştığı ve müşterilerin uzun kuyruklar oluşturduğu bir senaryoya benzer.
+
+Amazon EC2 Auto Scaling, uygulamanın talebe göre değişen ihtiyaçlarına yanıt olarak, EC2 instance’larını otomatik olarak eklemeni (scale out) veya azaltmanı (scale in) sağlar.
+
+Bu sayede, instance sayısı gerektiğinde otomatik olarak artırılıp azaltılarak uygulamanın yüksek erişilebilirliği korunur ve gereksiz kapasitenin de önüne geçilir.
+
+Amazon EC2 Auto Scaling içinde iki farklı yaklaşım bulunur:
+
+- Dinamik Ölçekleme (Dynamic Scaling) → Uygulama talebindeki değişikliklere gerçek zamanlı tepki verir.
+
+- Tahmine Dayalı Ölçekleme (Predictive Scaling) → Geçmiş verilere dayanarak gelecekteki talebi tahmin eder ve instance sayısını önceden ayarlayarak buna göre zamanlama yapar.
+
+Daha hızlı scale olmak isterseniz hem dynamic hem de predictive scaling'i birlikte kullanmanız gerekir.
+
+
+
+
+
+
+
+
+
+
+
 
 
 
