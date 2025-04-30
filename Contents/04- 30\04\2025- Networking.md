@@ -31,7 +31,7 @@ VPC içindeki özel kaynaklara erişmek için, bir virtual private gateway (sana
 
 Virtual private gateway, bu şekilde korunan internet trafiğinin VPC’ye girişini sağlayan bileşendir. Ancak, bağlantınız korumalı olsa da trafik sıkışıklığı yaşanabilir, çünkü hâlâ diğer müşterilerle aynı yolu kullanıyorsunuz.
 
-[image](images/vpn.png)
+![image](images/vpn.png)
 
 Virtual private gateway, VPC’niz ile özel bir ağ arasında, örneğin bir şirket içi veri merkezi veya kurum içi özel ağ gibi
 bir sanal özel ağ (VPN) bağlantısı kurmanıza olanak tanır.
