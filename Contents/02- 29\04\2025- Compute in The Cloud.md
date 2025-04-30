@@ -298,6 +298,198 @@ Yani özet olarak, kullanılmayan instance'lar kapatılır, talep arttığında 
 
 - ELB sadece dışarıdan gelen trafik için değil, frontend → backend trafiği için de kullanılabilir. Frontend'ler backend instance sayısını bilmek zorunda kalmaz, sadece ELB URL'ine istek atar. Bu da frontend ve backend'i birbirinden ayırarak "Decoupled Architecture" sunar.
 
+-------------------------------------------------------------------------------------------------------------------------------
+
+## Messaging and Queuing
+
+Eğer uygulamalar birbiriyle doğrudan -buffer olmadan- iletişim kuruyorsa, bu "tightly coupled" (sıkı bağlı) bir mimaridir. Örneğin A uygulaması ile B uygulaması birbiri ile direk olarak iletişime geçiyor olsun. B uygulamasında bir sorun çıkarsa otomatik olarak A uygulaması da hata verecektir. Tightly coupled mimarilerde, bir bileşenin arızalanması tüm sistemin arızalanmasına yol açar.
+
+Bunun yerine daha sağlam ve esnek bir yapı olan "loosely coupled" (gevşek bağlı) mimari kullanılır. Bu mimaride bir bileşen çökerse diğerleri etkilenmez, sistem ayakta kalır. Bunu, A uygulamasından B uygulamasına mesajın gitmeden evvel ilk olarak bir buffer'dan geçmesini sağlayarak yapar. B uygulamasında bir hata oluşursa mesaj, buffer'da kuyrukta (queue) bekler. B uygulaması ne zaman düzelirse mesaj o zaman gönderilir.
+
+AWS mimarilerinde de hedef budur: loosely coupled sistemler kurmak. Bu noktada iki önemli AWS hizmeti devreye girer:
+
+Amazon SQS (Simple Queue Service) ve Amazon SNS (Simple Notification Service).
+
+### Amazon SQS
+
+SQS, yazılım bileşenleri arasında mesajları güvenli bir şekilde gönderip almanı, saklamanı ve kuyrukta tutmanı sağlar. Mesaj içerisindeki veriler payload olarak adlandırılır ve güvenli bir şekilde saklanır. Mesajlar kuyrukta bekler ve uygulama kullanılabilir olduğunda mesajı işler.
+
+SQS altyapısı otomatik olarak ölçeklenir (auto scaling), güvenilirdir, kurulumu kolaydır. AWS senin için barındırır.
+
+### Amazon SNS
+
+SNS de mesaj göndermeni sağlar ama bu sefer bildirim tarzında çalışır. 
+
+“Publish/Subscribe” modelini kullanır. Yani bir SNS konusu (topic) oluşturursun. Bunu bir kanal gibi düşünebilirsiniz. Sonra bu kanala abone olacak hedefleri eklersin. Ve bir mesaj yayınladığında, o mesaj tüm abonelere aynı anda gider. Bu aboneler; bir SQS kuyruğu, bir Lambda fonksiyonu ya da HTTP/HTTPS webhook olabilir. Ayrıca SNS, kullanıcılara SMS, e-posta veya mobil bildirim de gönderebilir. 
+
+Kısaca SNS, farklı sistemlere aynı anda mesaj göndermek için kullanılır. SNS, aynı mesajı birçok yere aynı anda dağıtır. SQS gibi sıraya koymaz, bekletmez, direkt dağıtır.
+
+#### NOT: Bir topic ile ilgili bir mesaj yayınlandığında, sadece o topic'e abone olan sistemler o mesajı alır.
+
+#### NOT: Ve tekrar söylemek gerekirse, bu mesajı alan kişiler sadece insanlar olmak zorunda değildir. Aynı zamanda sistemler ve servisler de olabilirler.
+
+### Monolithic Applications and Microservices
+
+Uygulamalar, birden çok bileşenden oluşur. Bu bileşenler, verileri iletmek, istekleri karşılamak ve uygulamanın çalışmasını sürdürmek için birbirleriyle iletişim kurar.
+
+Diyelim ki birbirine sıkı sıkıya bağlı bileşenlere sahip bir uygulamanız var. Bu bileşenler; veritabanları, sunucular, kullanıcı arayüzü, iş mantığı gibi şeyleri içerebilir. Bu tür bir mimari, "monolithic" bir uygulama olarak kabul edilebilir.
+
+Bu uygulama mimarisi yaklaşımında, eğer tek bir bileşen arızalanırsa diğer bileşenler de arızalanır ve muhtemelen tüm uygulama çöker.
+
+*Uygulamanın kullanılabilirliğini, tek bir bileşen arızalandığında bile sürdürebilmek için, uygulamanızı mikro hizmetler yani "microservices" yaklaşımıyla tasarlayabilirsiniz.*
+
+Mikro hizmetler yaklaşımında, uygulama bileşenleri gevşek bağlıdır (loosely coupled). Bu durumda, eğer bir bileşen arızalanırsa diğer bileşenler çalışmaya devam eder çünkü birbirleriyle bağımsız bir şekilde iletişim kurarlar. Bu gevşek bağlı yapı, tüm uygulamanın çökmesini engeller.
+
+AWS üzerinde uygulama tasarlarken, farklı işlevleri yerine getiren servisler ve bileşenlerle mikro hizmetler yaklaşımını kullanabilirsiniz.
+Bu uygulama entegrasyonunu kolaylaştıran iki hizmet daha önceden de bahsettiğimiz gibi; Amazon Simple Notification Service (Amazon SNS) ve Amazon Simple Queue Service (Amazon SQS)'dir.
+
+-------------------------------------------------------------------------------------------------------------------------------
+
+## Additional Compute Services
+
+### Serverless Computing Mantığı
+
+Önceki konularda, bulutta sanal sunucular çalıştırmanıza olanak tanıyan bir hizmet olan Amazon EC2’yi öğrendik. Amazon EC2 üzerinde çalıştırmak istediğiniz uygulamalar varsa, aşağıdaki adımları gerçekleştirmeniz gerekir:
+
+- Instance’ları (sanal sunucuları) sağla (provision et).
+
+- Kodunu yükle
+
+- Uygulaman çalışırken bu instance’ları yönetmeye devam et.
+
+Bunun haricinde, “Serverless” (sunucusuz) terimi ise, kodunuzun yine sunucular üzerinde çalıştığı ancak bu sunucuları sağlamak (provision) veya yönetmek zorunda olmadığınız anlamına gelir.
+
+Serverless computing sayesinde, sunucu bakımıyla uğraşmak yerine yeni ürünler ve özellikler geliştirmeye odaklanabilirsiniz.
+
+Serverless computing'in bir diğer avantajı ise, uygulamaların otomatik olarak ölçeklenebilmesidir. Serverless mimari, uygulamanın kapasitesini; bellek (memory) ve veri işleme hızı (throughput) gibi tüketim birimlerine göre otomatik olarak ayarlayabilir.
+
+AWS’nin serverless computing için sunduğu hizmetlerden biri AWS Lambda’dır.
+
+## AWS Lambda
+
+AWS Lambda, sunucuları sağlamak veya yönetmek zorunda kalmadan kod çalıştırmanıza olanak tanıyan bir hizmettir. 
+
+AWS Lambda kullanırken, yalnızca kullandığınız işlem süresi kadar ödeme yaparsınız. Yani, kodunuz çalıştığı sürece ücretlendirilirsiniz; çalışmadığı zaman herhangi bir ücret ödemezsiniz.
+
+Ayrıca, sıfır sunucu yönetimiyle bile her türlü uygulama veya arka uç (backend) servisi için kod çalıştırabilirsiniz. Örneğin, basit bir Lambda fonksiyonu; AWS Cloud’a yüklenen görsellerin otomatik olarak yeniden boyutlandırılmasını içerebilir.
+Bu durumda, fonksiyon yeni bir görsel yüklendiğinde tetiklenir (trigger edilir).
+
+### How AWS Lambda works?
+
+1- Kodunu yüklersiniz.
+
+2- Kodunuzu, AWS servisleri, mobil uygulamalar veya HTTP uç noktaları (endpoints) gibi bir olay kaynağından (event source) tetiklenecek şekilde ayarlarsınız.
+
+3- Lambda, kodunuzu sadece tetiklendiğinde çalıştırır.
+
+4- Yalnızca kullandığınız işlem süresi kadar ödeme yaparsınız. Önceki görsel yeniden boyutlandırma örneğinde olduğu gibi, yalnızca yeni görseller yüklendiğinde Lambda çalışır ve siz de sadece bu işlem süresi için ödeme yaparsınız. Görsel yükleme olayı (event), Lambda fonksiyonunun tetiklenmesine neden olur.
+
+*AWS'de ayrıca, containerized uygulamalar da oluşturabilir ve çalıştırabilirsiniz.*
+
+## Containers
+
+Container’lar, uygulamanızın kodunu ve bağımlılıklarını tek bir nesne (object) içinde paketlemenin standart bir yolunu sunar.
+
+Ayrıca container’lar; güvenlik, güvenilirlik (reliabilty) ve ölçeklenebilirlik gibi temel gereksinimlerin bulunduğu süreçler ve iş akışları için de kullanılabilir. Yani, container'lar sadece kodları paketlemekten ibaret değildir. Aynı zamanda, eğer bir iş süreci veya uygulama;
+
+- Güvenli olmalıysa (izole çalışmalı, dışarıya kapalı olmalıysa),
+
+- Güvenilir olmalıysa (kolay çökmesin, tutarlı çalışsın),
+
+- Kolay ölçeklenebilir olmalıysa (yük artınca aynı container’dan çoğaltabilirsin),
+
+o zaman, container mimarisi kullanılabilir.
+
+*Bunları daha iyi anlayabilmek için container'ın çalışma mantığını oturtmamız gerekir.*
+
+### How containers work?
+
+> One host with multiple containers
+
+Bir yazılımcının kendi bilgisayarında uygulama geliştirdiğini varsayalım. Uygulama kendi bilgisayarında sorunsuz çalışıyor. Ama aynı uygulama, IT ekibinin sunucusuna veya başka bir ortama kurulduğunda, hata veriyor ve farklı davranıyor. Bunun nedeni, uygulamanın çalıştırıldığı ortamın, geliştirildiği ortamdan farklı olmasıdır. Örneğin, yazılmcı bilgisayarında başka bir python sürümünü kullanıyorsa, sunucuda ise daha farklı bir kütüphane versiyonu mevcutsa, uygulama hata verebilir. Bunun çözümü ise container'lardan geçer.
+
+Yazılımcı uygulamayı bir container içine koyar, yani; kodu, kütüphaneleri, ayarları ve kullandığı işletim sistemi gibi öğeleri bir pakette topluyor. Ve sonuç olarak o container, her ortamda çalışır hale geliyor çünkü, "Aynı container = Aynı ortam, aynı sonuç".
+
+Bu yöntem, uygulamalardaki hataları ayıklamak (debug) ve bilgisayar ortamları arasındaki farkları teşhis etmek için harcanan zamanı azaltmaya yardımcı olur.
+
+![image](images/onehost.png)
+
+> Tens of hosts with hundreds of containers
+
+Container tabanlı uygulamalar çalıştırırken, ölçeklenebilirlik konusunu dikkate almak önemlidir.
+
+Diyelim ki artık sadece tek bir host üzerinde birkaç container değil de:
+
+Onlarca host üzerinde yüzlerce container, hatta yüzlerce host üzerinde binlerce container yönetmen gerekiyor.
+
+Bu kadar büyük ölçekte bir ortamda; bellek kullanımı, güvenlik, loglama gibi şeyleri tek tek elle takip etmek ne kadar zaman alır? bir hayal edin.
+
+İşte tam da bu soruna çözüm olarak, container orchestration servisleri, container tabanlı uygulamalarınızı dağıtmanıza (deploy), yönetmenize ve ölçeklendirmenize yardımcı olur. container orkestrasyonu sağlayan iki hizmet; Amazon Elastic Container Service (Amazon ECS) ve Amazon Elastic Kubernetes Service (Amazon EKS)'dir.
+
+## Amazon Elastic Container Service (Amazon ECS)
+
+Amazon Elastic Container Service (Amazon ECS), AWS üzerinde container tabanlı uygulamaları çalıştırmanızı ve ölçeklendirmenizi sağlayan, highly-scalable ve high-performance bir container yönetim sistemidir.
+
+Amazon ECS, Docker container’larını destekler. Docker, uygulamaları hızlıca inşa etmenizi, test etmenizi ve dağıtmanızı sağlayan bir yazılım platformudur. Docker, uygulamanı ve onun çalışması için gereken her şeyi (kütüphaneler, ayarlar, bağımlılıklar) tek bir “container” içinde paketlemeni sağlar. Yani bundan önce bahsettiğimiz container mantığını sağlayan bir platformdur.
+
+AWS, hem açık kaynaklı Docker Community Edition’ı hem de abonelik tabanlı Docker Enterprise Edition’ı destekler.
+
+Amazon ECS sayesinde, API calls (çağrıları) kullanarak Docker destekli uygulamaları başlatabilir ve durdurabilirsiniz.
+
+## Amazon Elastic Kubernetes Service (Amazon EKS)
+
+Amazon Elastic Kubernetes Service (Amazon EKS), AWS üzerinde Kubernetes çalıştırmak için kullanabileceğiniz, tamamen yönetilen (fully managed) bir hizmettir.
+
+Kubernetes, büyük ölçekte container tabanlı uygulamaları dağıtmanızı (deploy) ve yönetmenizi sağlayan açık kaynaklı bir yazılımdır. Kubernetes, gönüllülerin oluşturduğu büyük bir topluluk tarafından geliştirilir ve sürdürülür. AWS de bu toplulukla aktif olarak iş birliği yapar. Kubernetes’e yeni özellikler ve işlevler eklendikçe, Amazon EKS ile yönettiğiniz uygulamalara bu güncellemeleri kolayca uygulayabilirsiniz.
+
+Kendi başınıza da Kubernetes kurabilirsiniz ama bu hem sizin kendi kendinize uğraşmanızı hem de bakımını kendiniz yapmanızı gerektirir. Bu süreçler zorlayıcı olabilir ve bu yüzden de Amazon EKS kullanmak isteyebilirsiniz. AWS size hazır bir Kubernetes ortamı sağlar.
+
+## AWS Fargate
+
+AWS Fargate, container'lar için sunucusuz (serverless) bir işlem motorudur. Hem Amazon ECS hem de Amazon EKS ile birlikte çalışır. AWS Fargate kullandığınızda, sunucu sağlamak (provision) veya sunucuları yönetmek zorunda kalmazsınız. Sunucu altyapısını AWS sizin yerinize yönetir. Bu sayede siz, uygulamanızı geliştirmeye ve yenilik yapmaya daha fazla odaklanabilirsiniz. Ayrıca, yalnızca container’larınızı çalıştırmak için gereken kaynaklar kadar ödeme yaparsınız.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
