@@ -154,6 +154,45 @@ Yani aslında, eğer bir bağlantı senin instance'ından başlatıldıysa, gele
 
 ![image](images/aclsecgroup.png)
 
+-------------------------------------------------------------------------------------------------------------------------------
+
+## Global Networking
+
+### Amazon Route 53
+
+Amazon Route 53, bir DNS web servisidir. Geliştiricilere ve işletmelere, AWS üzerinde barındırılan internet uygulamalarına son kullanıcıları yönlendirmek için güvenilir bir yöntem sunar.
+
+Amazon Route 53, kullanıcı isteklerini AWS üzerinde çalışan altyapıya (örneğin Amazon EC2 instance'ları ve yük dengeleyiciler gibi) bağlar. Ayrıca, AWS dışındaki altyapılara da kullanıcı yönlendirmesi yapabilir.
+
+Route 53’ün bir diğer özelliği ise alan adlarına ait DNS kayıtlarını yönetme yeteneğidir. Route 53 üzerinden doğrudan yeni alan adları kaydedebilirsin. Ayrıca, başka alan adı kayıt şirketleri tarafından yönetilen mevcut alan adlarının DNS kayıtlarını da Route 53’e aktarabilirsin. Bu sayede tüm alan adlarını tek bir yerden yönetebilirsin.
+
+Bundan önce, bir content delivery service olan Amazon CloudFront'u öğrenmiştik. Aşağıdaki örnek, Route 53 ile Amazon CloudFront’un birlikte nasıl çalışarak içeriği müşterilere ulaştırdığını açıklar.
+
+> ÖRNEK
+
+Diyelim ki AnyCompany’nin uygulaması birkaç Amazon EC2 instance’ı üzerinde çalışıyor. Bu instance’lar, bir Application Load Balancer’a bağlı olan bir Auto Scaling grubunun içinde yer alıyor.
+
+1- Bir müşteri, AnyCompany’nin web sitesine girerek uygulamadan veri talep eder.
+
+2- Amazon Route 53, DNS çözümlemesini kullanarak AnyCompany.com alan adının karşılık geldiği IP adresi olan 192.0.2.0’ı belirler. Bu bilgi müşteriye geri gönderilir.
+
+3- Müşterinin isteği, Amazon CloudFront aracılığıyla en yakın edge (uç) konumuna gönderilir.
+
+4- Amazon CloudFront, Application Load Balancer’a bağlanır ve gelen paketi bir Amazon EC2 instance’ına iletir.
+
+#### NOT: CloudFront bildiğiniz gibi normalde içeriklerin kopyasını tutar ve direk o kopyadan size sunar. Ama bu örnekte de olduğu gibi, bir kullanıcı ilk kez içerik isterse veya içerik önbellekten silinmişse, CloudFront o isteği origin'e (yani kökenine) yönlendirecektir.
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
